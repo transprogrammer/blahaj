@@ -1,89 +1,35 @@
 using Azure.Core;
 using Azure.Identity;
+using Azure.ResourceManager.Fluent;
+using Azure.ResourceManager.Fluent.Core;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Samples.Utilities;
 using System;
 using System.Threading.Tasks;
 
-namespace DeployUsingARMTemplate
+namespace Deploy
 {
-    public class Program
+    class Program
     {
-        public static async Task RunSample(TokenCredential credential)
+        const string Name = "beep-boops";
+        const string Location = "eastus2";
+	const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
+
+        static void Main(string[] args)
         {
-            var rgName = Utilities.RandomResourceName("rgRSAT", 24);
-            var deploymentName = Utilities.RandomResourceName("dpRSAT", 24);
-            var location = "westus";
-            var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-            var templateJson = Utilities.GetArmTemplate("ArmTemplate.json");
+	    var credentials = new DefaultAzureCredential();
 
-            var resourceClient = new ResourcesManagementClient(subscriptionId, credential);
-            var resourceGroups = resourceClient.ResourceGroups;
-            var deployments = resourceClient.Deployments;
+            var azure = Azure.Configure().Authenticate(credentials).Subscription(SubscriptionId);
 
-            try
-            {
-                // Create resource group.
+            string bicepTemplate = System.IO.File.ReadAllText("main.bicep");
 
-                Utilities.Log("Creating a resource group with name: " + rgName);
+            var deployment = await azure.Deployments.Define("deploymentName")
+                .WithTemplate(bicepTemplate)
+                .WithParameters("{}")
+                .CreateAsync();
 
-                var resourceGroup = new ResourceGroup(location);
-                resourceGroup = await resourceGroups.CreateOrUpdateAsync(rgName, resourceGroup);
-
-                Utilities.Log("Created a resource group with name: " + rgName);
-
-                // Create a deployment for an Azure App Service via an ARM
-                // template.
-
-                Utilities.Log("Starting a deployment for an Azure App Service: " + deploymentName);
-
-                var parameters = new Deployment
-                (
-                    new DeploymentProperties(DeploymentMode.Incremental)
-                    {
-                        Template = templateJson,
-                        Parameters = "{}"
-                    }
-                 );
-                var rawResult = await deployments.StartCreateOrUpdateAsync(rgName, deploymentName, parameters);
-                await rawResult.WaitForCompletionAsync();
-
-                Utilities.Log("Completed the deployment: " + deploymentName);
-            }
-            finally
-            {
-                try
-                {
-                    Utilities.Log("Deleting Resource Group: " + rgName);
-
-                    await (await resourceGroups.StartDeleteAsync(rgName)).WaitForCompletionAsync();
-
-                    Utilities.Log("Deleted Resource Group: " + rgName);
-                }
-                catch (Exception ex)
-                {
-                    Utilities.Log(ex);
-                }
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See License.txt in the project root for license information.
-
-            }
-        }
-
-        public static async Task Main(string[] args)
-        {
-            try
-            {
-                // Authenticate
-                var credentials = new DefaultAzureCredential();
-
-                await RunSample(credentials);
-            }
-            catch (Exception ex)
-            {
-                Utilities.Log(ex);
-            }
+            Console.WriteLine("Bicep template deployed successfully.");
         }
     }
 }
