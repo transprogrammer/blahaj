@@ -6,18 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Bicep.CommandLine.linux-x64" Version="0.13.1" />
+    <PackageReference Include="Azure.Bicep.MSBuild" Version="0.13.1" />
     <PackageReference Include="Azure.Identity" Version="1.2.2" />
-    <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.1" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.1" />
+    <PackageReference Include="Microsoft.Build" Version="17.4.0" />    
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\utilities\Utilities.csproj" />
+    <Bicep Include="main.bicep" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Asset\*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

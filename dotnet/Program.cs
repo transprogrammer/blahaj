@@ -1,35 +1,63 @@
 using Azure.Core;
 using Azure.Identity;
-using Azure.ResourceManager.Fluent;
-using Azure.ResourceManager.Fluent.Core;
-using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
-using Samples.Utilities;
+using FluentAzure = Microsoft.Azure.Management.Fluent.Azure;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System;
-using System.Threading.Tasks;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace Deploy
 {
     class Program
     {
-        const string Name = "beep-boops";
+        const string ResourceGroupName = "beep-boops";
+
+        const string DeploymentName = "beep-boops-deployment";
         const string Location = "eastus2";
 	    const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
 
+        const string TemplateFilename = "main.json";
+        
+        const string PublicKeyPath = "../ssh/id_rsa.pub";
+
         static void Main(string[] args)
         {
-	    var credentials = new DefaultAzureCredential();
+	        var credentials = new AzureCliCredential();
 
-            var azure = Azure.Configure().Authenticate(credentials).Subscription(SubscriptionId);
+            var defaultCredential = new DefaultAzureCredential();
+            var defaultToken = defaultCredential.GetToken(new TokenRequestContext(new[] { "https://management.azure.com/.default" })).Token;
+            var defaultTokenCredentials = new Microsoft.Rest.TokenCredentials(defaultToken);
+            var azureCredentials = new Microsoft.Azure.Management.ResourceManager.Fluent.Authentication.AzureCredentials(defaultTokenCredentials, defaultTokenCredentials, null, AzureEnvironment.AzureGlobalCloud);
+            var azure = FluentAzure.Configure().Authenticate(azureCredentials).WithSubscription(SubscriptionId);
 
-            string bicepTemplate = System.IO.File.ReadAllText("main.bicep");
+            var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TemplateFilename);
+            var templateData = File.ReadAllText(templatePath);
 
-            var deployment = await azure.Deployments.Define("deploymentName")
-                .WithTemplate(bicepTemplate)
-                .WithParameters("{}")
-                .CreateAsync();
+            var publicKeyData = File.ReadAllText(PublicKeyPath);
 
-            Console.WriteLine("Bicep template deployed successfully.");
+            var parameterObject = new { public_key = new { value = publicKeyData}};
+            var parameterData = JsonConvert.SerializeObject(parameterObject);
+
+            Console.WriteLine("parameterData: " + parameterData);
+
+            azure.Deployments.Define(DeploymentName)
+                .WithExistingResourceGroup(ResourceGroupName)
+                .WithTemplate(templateData)
+                .WithParameters(parameterData)
+                .WithMode(DeploymentMode.Incremental)
+                .BeginCreate();
+        
+            var deployment = azure.Deployments.GetByResourceGroup(ResourceGroupName, DeploymentName);
+            
+            Console.WriteLine("Current deployment status : " + deployment.ProvisioningState);
+
+            while(deployment.ProvisioningState == ProvisioningState.Running)
+            {
+                SdkContext.DelayProvider.Delay(10000);
+                deployment = azure.Deployments.GetByResourceGroup(ResourceGroupName, DeploymentName);
+                Console.WriteLine("Current deployment status : " + deployment.ProvisioningState);
+            }
         }
     }
 }

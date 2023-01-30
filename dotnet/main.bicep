@@ -1,5 +1,3 @@
-// https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.compute/vm-simple-linux/main.bicep
-
 var name              = 'beep-beeps'
 
 param username string = 'blahaj'
@@ -14,14 +12,14 @@ var storage_account_type = 'Standard_LRS'
 var virtual_network_address_prefix = '10.1.0.0/16'
 var subnet_address_prefix          = '10.1.0.0/24'
 
-var ubuntu_server_sku = '20.04 LTS'
+var ubuntu_server_offer = '0001-com-ubuntu-server-focal'
+var ubuntu_server_sku = '20_04-lts-gen2'
 var ubuntu_server_version = 'latest'
 
 resource network_interface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: name
   location: location
   properties: {
-    va
     ipConfigurations: [
       {
         name: name
@@ -118,7 +116,7 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
       imageReference: {
         publisher: 'Canonical'
-        offer: 'UbuntuServer'
+        offer: ubuntu_server_offer
         sku: ubuntu_server_sku
         version: ubuntu_server_version
       }
@@ -126,7 +124,7 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: network_interface_card.id
+          id: network_interface.id
         }
       ]
     }
