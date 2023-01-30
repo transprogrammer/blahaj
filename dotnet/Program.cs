@@ -14,7 +14,7 @@ namespace Deploy
     {
         const string Name = "beep-boops";
         const string Location = "eastus2";
-	const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
+	    const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
 
         static void Main(string[] args)
         {
