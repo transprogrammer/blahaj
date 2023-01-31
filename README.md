@@ -1,4 +1,4 @@
-# modmail
+# blahaj
 a discord modmail infrastructure-as-code solution
 
 ## licensing
