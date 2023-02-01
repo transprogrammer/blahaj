@@ -187,6 +187,7 @@ resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
         isZoneRedundant: false
       }
     ]
+    publicNetworkAccess: 'Disabled'
   }
 
   resource database 'mongodbDatabases@2022-05-15' = {
