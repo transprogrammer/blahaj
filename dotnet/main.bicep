@@ -1,10 +1,11 @@
+param username string = 'uwu'
+
 @secure()
 param public_key string
 
 param location string = resourceGroup().location
 
-var username = 'uwu'
-var name     = 'blahaj'
+var name = 'blahaj'
 
 var virtual_machine_size = 'Standard_B2ms'
 var storage_account_type = 'Standard_LRS'
