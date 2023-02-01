@@ -4,6 +4,7 @@ param username string = 'uwu'
 param public_key string
 
 param location string = resourceGroup().location
+param failover_location string = 'westus2'
 
 var name = 'blahaj'
 
@@ -26,7 +27,7 @@ resource network_interface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
         name: name
         properties: {
           subnet: {
-            id: subnet.id
+              id: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0].id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
@@ -72,16 +73,15 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
         virtual_network_address_prefix
       ]
     }
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: virtual_network
-  name: name
-  properties: {
-    addressPrefix: subnet_address_prefix
-    privateEndpointNetworkPolicies: 'Enabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
+    subnets: [{
+      name: name
+      properties: {
+        addressPrefix: subnet_address_prefix
+        privateEndpointNetworkPolicies: 'Enabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
+        networkSecurityGroup: network_security_group
+      }
+    }]
   }
 }
 
@@ -144,6 +144,49 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
           ]
         }
       }
+    }
+  }
+}
+
+//param accountName string = 'mongodb-${uniqueString(resourceGroup().id)}'
+
+resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+  name: name
+  location: location
+  kind: 'MongoDB'
+  properties: {
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Eventual'
+    }
+    locations: [
+      {
+        locationName: failover_location
+        failoverPriority: 0
+        isZoneRedundant: false
+      }
+    ]
+    databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
+    apiProperties: {
+      serverVersion: '4.2'
+    }
+    capabilities: [
+      {
+        name: 'DisableRateLimitingResponses'
+      }
+    ]
+  }
+}
+
+resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
+  parent: account
+  name: name
+  properties: {
+    resource: {
+      id: name
+    }
+    options: {
+      throughput: 400
     }
   }
 }

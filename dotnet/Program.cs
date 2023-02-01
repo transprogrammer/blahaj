@@ -5,6 +5,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Deploy
@@ -52,7 +53,9 @@ namespace Deploy
             
             Console.WriteLine("Current deployment status : " + deployment.ProvisioningState);
 
-            while(deployment.ProvisioningState == ProvisioningState.Running)
+            var interimStates = new []{ProvisioningState.Running, ProvisioningState.Accepted};
+
+            while(interimStates.Contains(deployment.ProvisioningState))
             {
                 SdkContext.DelayProvider.Delay(10000);
                 deployment = azure.Deployments.GetByResourceGroup(ResourceGroupName, DeploymentName);
