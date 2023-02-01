@@ -19,7 +19,7 @@ namespace Deploy
 
         const string TemplateFilename = "main.json";
         
-        const string PublicKeyPath = "../ssh/id_ed25519.pub";
+        const string PublicKeyPath = "../ssh/id_rsa.pub";
 
         static void Main(string[] args)
         {
