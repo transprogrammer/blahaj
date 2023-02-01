@@ -79,7 +79,9 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
         addressPrefix: subnet_address_prefix
         privateEndpointNetworkPolicies: 'Enabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
-        networkSecurityGroup: network_security_group
+        networkSecurityGroup: {
+          id: network_security_group.id
+        }
       }
     }]
   }
