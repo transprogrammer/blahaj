@@ -18,53 +18,43 @@ var ubuntu_server_offer = '0001-com-ubuntu-server-focal'
 var ubuntu_server_sku = '20_04-lts-gen2'
 var ubuntu_server_version = 'latest'
 
-resource network_interface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource public_ip_address 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: name
   location: location
+  sku: {
+    name: 'Basic'
+  }
   properties: {
-    ipConfigurations: [
-      {
-        name: name
-        properties: {
-          subnet: {
-              id: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0].id
-          }
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: public_ip_address.id
-          }
-        }
-      }
-    ]
-    networkSecurityGroup: {
-      id: network_security_group.id
+    publicIPAllocationMethod: 'Dynamic'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: name
     }
+    idleTimeoutInMinutes: 4
   }
 }
 
-resource network_security_group 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource network_security_group 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: name
   location: location
   properties: {
-    securityRules: [
-      {
-        name: 'SSH'
-        properties: {
-          priority: 1000
-          protocol: 'Tcp'
-          access: 'Allow'
-          direction: 'Inbound'
-          sourceAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '22'
-        }
+    securityRules: [{
+      name: 'SSH'
+      properties: {
+        priority: 1000
+        protocol: 'Tcp'
+        access: 'Allow'
+        direction: 'Inbound'
+        sourceAddressPrefix: '*'
+        sourcePortRange: '*'
+        destinationAddressPrefix: '*'
+        destinationPortRange: '22'
       }
-    ]
+    }]
   }
 }
 
-resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: name
   location: location
   properties: {
@@ -79,27 +69,41 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
         addressPrefix: subnet_address_prefix
         privateEndpointNetworkPolicies: 'Enabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
-        networkSecurityGroup: {
-          id: network_security_group.id
-        }
+        networkSecurityGroup: network_security_group
       }
     }]
   }
 }
 
-resource public_ip_address 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.mongo.cosmos.azure.com'
+  location: location
+
+  resource virtual_network_link 'virtualNetworkLinks@2020-06-01' = {
+    name: name
+    location: location
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: virtual_network
+    }
+  }
+}
+
+resource network_interface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: name
   location: location
-  sku: {
-    name: 'Basic'
-  }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
-    publicIPAddressVersion: 'IPv4'
-    dnsSettings: {
-      domainNameLabel: name 
-    }
-    idleTimeoutInMinutes: 4
+    ipConfigurations: [
+      {
+        name: name
+        properties: {
+          subnet: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0]
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: public_ip_address
+        }
+      }
+    ]
+    networkSecurityGroup: network_security_group
   }
 }
 
@@ -126,9 +130,7 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     }
     networkProfile: {
       networkInterfaces: [
-        {
-          id: network_interface.id
-        }
+        network_interface
       ]
     }
     osProfile: {
@@ -150,25 +152,11 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-//param accountName string = 'mongodb-${uniqueString(resourceGroup().id)}'
-
-resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   name: name
   location: location
   kind: 'MongoDB'
   properties: {
-    consistencyPolicy: {
-      defaultConsistencyLevel: 'Eventual'
-    }
-    locations: [
-      {
-        locationName: failover_location
-        failoverPriority: 0
-        isZoneRedundant: false
-      }
-    ]
-    databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: true
     apiProperties: {
       serverVersion: '4.2'
     }
@@ -177,11 +165,56 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
         name: 'DisableRateLimitingResponses'
       }
     ]
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Eventual'
+    }
+    databaseAccountOfferType: 'Standard'
+    enableAutomaticFailover: true
+    locations: [
+      {
+        locationName: failover_location
+        failoverPriority: 0
+        isZoneRedundant: false
+      }
+    ]
+  }
+}
+
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-07-01' = {
+  name: name
+  location: location
+  properties: {
+    subnet: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0]
+    privateLinkServiceConnections: [
+      {
+        name: name
+        properties: {
+          privateLinkServiceId: database_account.id
+          groupIds: [
+            'MongoDB'
+          ]
+        }
+      }
+    ]
+  }
+
+  resource private_dns_zone_group 'privateDnsZoneGroups@2022-07-01' = {
+    name: name
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: name
+          properties: {
+            privateDnsZoneId: private_dns_zone.id
+          }
+        }
+      ]
+    }
   }
 }
 
 resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
-  parent: account
+  parent: database_account
   name: name
   properties: {
     resource: {
@@ -194,4 +227,3 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-0
 }
 
 output ssh_command string = 'ssh ${username}@${public_ip_address.properties.dnsSettings.fqdn}'
-
