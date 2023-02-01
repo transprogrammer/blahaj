@@ -86,7 +86,9 @@ resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
     location: 'global'
     properties: {
       registrationEnabled: false
-      virtualNetwork: virtual_network
+      virtualNetwork: {
+        id: virtual_network.id
+      }
     }
   }
 }
