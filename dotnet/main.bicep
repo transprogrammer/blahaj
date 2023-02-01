@@ -3,8 +3,8 @@ param username string = 'uwu'
 @secure()
 param public_key string
 
-param location string = resourceGroup().location
-param failover_location string = 'westus2'
+param primary_region string
+param failover_region string
 
 var name = 'blahaj'
 
@@ -20,7 +20,7 @@ var ubuntu_server_version = 'latest'
 
 resource public_ip_address 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: name
-  location: location
+  location: primary_region
   sku: {
     name: 'Basic'
   }
@@ -36,7 +36,7 @@ resource public_ip_address 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
 
 resource network_security_group 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: name
-  location: location
+  location: primary_region
   properties: {
     securityRules: [{
       name: 'SSH'
@@ -56,7 +56,7 @@ resource network_security_group 'Microsoft.Network/networkSecurityGroups@2022-07
 
 resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: name
-  location: location
+  location: primary_region
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -69,7 +69,9 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
         addressPrefix: subnet_address_prefix
         privateEndpointNetworkPolicies: 'Enabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
-        networkSecurityGroup: network_security_group
+        networkSecurityGroup: {
+          id: network_security_group.id
+        }
       }
     }]
   }
@@ -77,11 +79,11 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
 
 resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.mongo.cosmos.azure.com'
-  location: location
+  location: 'global'
 
   resource virtual_network_link 'virtualNetworkLinks@2020-06-01' = {
     name: name
-    location: location
+    location: primary_region
     properties: {
       registrationEnabled: false
       virtualNetwork: virtual_network
@@ -91,25 +93,31 @@ resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
 resource network_interface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: name
-  location: location
+  location: primary_region
   properties: {
     ipConfigurations: [
       {
         name: name
         properties: {
-          subnet: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0]
+          subnet: {
+            id: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0].id
+          }
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: public_ip_address
+          publicIPAddress: {
+            id: public_ip_address.id
+          }
         }
       }
     ]
-    networkSecurityGroup: network_security_group
+    networkSecurityGroup: {
+      id: network_security_group.id
+    }
   }
 }
 
 resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: name
-  location: location
+  location: primary_region
   properties: {
     hardwareProfile: {
       vmSize: virtual_machine_size
@@ -129,9 +137,9 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     networkProfile: {
-      networkInterfaces: [
-        network_interface
-      ]
+      networkInterfaces: [{
+        id: network_interface.id
+      }]
     }
     osProfile: {
       computerName: name
@@ -154,7 +162,7 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 
 resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   name: name
-  location: location
+  location: primary_region
   kind: 'MongoDB'
   properties: {
     apiProperties: {
@@ -172,17 +180,29 @@ resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
     enableAutomaticFailover: true
     locations: [
       {
-        locationName: failover_location
+        locationName: failover_region
         failoverPriority: 0
         isZoneRedundant: false
       }
     ]
   }
+
+  resource database 'mongodbDatabases@2022-05-15' = {
+    name: name
+    properties: {
+      resource: {
+        id: name
+      }
+      options: {
+        throughput: 400
+      }
+    }
+  }
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-07-01' = {
   name: name
-  location: location
+  location: primary_region
   properties: {
     subnet: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0]
     privateLinkServiceConnections: [
@@ -209,19 +229,6 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-07-01' = {
           }
         }
       ]
-    }
-  }
-}
-
-resource database 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
-  parent: database_account
-  name: name
-  properties: {
-    resource: {
-      id: name
-    }
-    options: {
-      throughput: 400
     }
   }
 }
