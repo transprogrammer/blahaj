@@ -83,7 +83,7 @@ resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
   resource virtual_network_link 'virtualNetworkLinks@2020-06-01' = {
     name: name
-    location: primary_region
+    location: 'global'
     properties: {
       registrationEnabled: false
       virtualNetwork: virtual_network

@@ -70,9 +70,9 @@ namespace Deploy
                     throw new ArgumentException(errorMessage);
                 }
 
-                templateReadyDeployment = blankDeployment.WithNewResourceGroup(ResourceGroupName, PrimaryRegion);
-            } else {
                 templateReadyDeployment = blankDeployment.WithExistingResourceGroup(ResourceGroupName);
+            } else {
+                templateReadyDeployment = blankDeployment.WithNewResourceGroup(ResourceGroupName, PrimaryRegion);
             }
 
             var deployment = templateReadyDeployment
