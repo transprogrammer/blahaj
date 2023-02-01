@@ -52,24 +52,24 @@ namespace Deploy
 
             var blankDeployment = azure.Deployments.Define(DeploymentName);
 
-            var existingResourceGroup = azure.ResourceGroups.GetByName(ResourceGroupName);
-
-            if (existingResourceGroup.Region != PrimaryRegion)
-            {
-                var errorMessage = String.Format(
-                    "${Existing resource group {0} has region {1}, expecting {2}",
-                    existingResourceGroup.Name,
-                    existingResourceGroup.Region.Name,
-                    PrimaryRegion.Name
-                );
-
-                throw new ArgumentException(errorMessage);
-            }
-
             IWithTemplate templateReadyDeployment;
 
             if (azure.ResourceGroups.Contain(ResourceGroupName))
             {
+                var existingResourceGroup = azure.ResourceGroups.GetByName(ResourceGroupName);
+
+                if (existingResourceGroup.Region != PrimaryRegion)
+                {
+                    var errorMessage = String.Format(
+                        "${Existing resource group {0} has region {1}, expecting {2}",
+                        existingResourceGroup.Name,
+                        existingResourceGroup.Region.Name,
+                        PrimaryRegion.Name
+                    );
+
+                    throw new ArgumentException(errorMessage);
+                }
+
                 templateReadyDeployment = blankDeployment.WithNewResourceGroup(ResourceGroupName, PrimaryRegion);
             } else {
                 templateReadyDeployment = blankDeployment.WithExistingResourceGroup(ResourceGroupName);
