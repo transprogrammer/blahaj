@@ -11,15 +11,15 @@ namespace Deploy
 {
     class Program
     {
-        const string ResourceGroupName = "beep-boops";
+        const string ResourceGroupName = "blahaj";
 
-        const string DeploymentName = "beep-boops-deployment";
+        const string DeploymentName = "blahaj-deployment";
         const string Location = "eastus2";
 	    const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
 
         const string TemplateFilename = "main.json";
         
-        const string PublicKeyPath = "../ssh/id_rsa.pub";
+        const string PublicKeyPath = "../ssh/id_ed25519.pub";
 
         static void Main(string[] args)
         {
