@@ -4,7 +4,7 @@ Description=Modmail
 [Service]
 User=root
 WorkingDirectory=/usr/local/src/modmail
-ExecStart=/usr/local/bin/pipenv run bot
+ExecStart=python3 bot.py
 Restart=on-failure
 
 [Install]
