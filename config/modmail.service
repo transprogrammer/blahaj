@@ -1,0 +1,11 @@
+[Unit]
+Description=Modmail
+
+[Service]
+User=modmail
+WorkingDirectory=/usr/local/src/modmail
+ExecStart=pipenv run bot
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
