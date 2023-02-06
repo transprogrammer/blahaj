@@ -27,3 +27,5 @@ sudo install \
 -- "${jail_paths['source']}" "${jail_paths['target']}"
 
 sudo systemctl restart fail2ban
+
+sudo fail2ban-client status
