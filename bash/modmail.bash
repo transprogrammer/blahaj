@@ -4,6 +4,10 @@
 
 # SEE: https://github.com/transprogrammer/modmail#local-hosting-general-guide <>
 
+# TODO: Template modmail service file. <>
+
+# !!!: Template env file <SKR>
+
 set +o braceexpand
 set -o errexit
 set -o noclobber
@@ -12,21 +16,37 @@ set -o nounset
 set -o pipefail
 set -x xtrace
 
-service_name='modmail'
+org='transprogrammer'
+name='modmail'
 
 script_dir="$(dirname "$0")"
 
-declare -A unit_paths=(
-  ['source']="$script_dir/../config/$service_name.service"
-  ['target']="/etc/systemd/system/$service_name.service"
+declare -A repository=(
+  ['dir']="/usr/local/src/$name"
+  ['url']="https://github.com/$org/$name.git"
 )
+repository['requirements']="${repository['dir']}/requirements.txt"
 
-sudo install --owner='root' --group='root' --mode='644' \
--- "${unit_paths['source']}" "${unit_paths['target']}"
+declare -A unit=(
+  ['source']="$script_dir/../config/$name.service"
+  ['target']="/etc/systemd/system/$name.service"
+  ['owner']='root'
+  ['group']='root'
+  ['mode']='644'
+)
+unit['name']="$(basename "${unit[target_path]}" .service)"
+
+sudo rm -rf "${repository['dir']}/requirements.txt"
+git clone "${repository['url']}" "${repository['dir']}"
+pip install --requirment "${repository['dir']}/requirements.txt"
+
+sudo install \
+  --owner="${unit['owner']}" \
+  --group="${unit['group']}" \
+   --mode="${unit['mode']}"  \
+-- "${unit['source']}" "${unit['target']}"
 
 sudo systemctl daemon-reload
-
-sudo systemctl start  "$service_name" 
-sudo systemctl enable "$service_name"
-
-sudo systemctl status "$service_name"
+sudo systemctl start  "${unit[name]}" 
+sudo systemctl enable "${unit[name]}"
+sudo systemctl status "${unit[name]}"
