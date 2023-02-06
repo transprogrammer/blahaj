@@ -4,6 +4,10 @@
   - [] Implement sops for discord token
   - [] Query azure for mongodb connection string
   - [] Implement template for .env file
+  
+- Understand app config
+  - [] Thread category id
+  - [] log category id
 
 - Implement logviewer-install script
   - [] Create logviewer install script
