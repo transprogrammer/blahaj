@@ -10,11 +10,12 @@ set -o nounset
 set -o pipefail
 set -x xtrace
 
-script_dir="$(basename "$0")"
+script_dir="$(dirname "$0")"
 
-source_path="$script_dir/../config/jail.local"
-
-jail_path='/etc/fail2ban/jail.local'
+declare -A jail_paths=(
+  ['source']="$script_dir/../config/jail.local"
+  ['target']='/etc/fail2ban/jail.local'
+)
 
 sudo apt-get update
 sudo apt-get install --yes -- fail2ban
@@ -23,6 +24,6 @@ sudo install \
   --owner='root' \
   --group='root' \
   --mode=644 \
--- <(echo "$jail_content") "$jail_path"
+-- "${jail_paths['source']}" "${jail_paths['target']}"
 
 sudo systemctl restart fail2ban
