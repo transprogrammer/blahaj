@@ -2,9 +2,9 @@
 Description=Modmail
 
 [Service]
-User=modmail
+User=root
 WorkingDirectory=/usr/local/src/modmail
-ExecStart=pipenv run bot
+ExecStart=/usr/local/bin/pipenv run bot
 Restart=on-failure
 
 [Install]
