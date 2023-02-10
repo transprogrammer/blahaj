@@ -5,7 +5,7 @@ Description=Modmail
 User=root
 WorkingDirectory=/usr/local/src/modmail
 ExecStart=python3 bot.py
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
