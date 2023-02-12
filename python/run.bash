@@ -14,4 +14,7 @@ script_dir=$(dirname "$0")
 
 pip install -r "$script_dir/requirements.txt"
 
-"$script_dir/main.py"
+# CAVEAT: Anchors python run context. <skr>
+cd "$script_dir"
+
+./main.py
