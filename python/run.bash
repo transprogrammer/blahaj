@@ -2,7 +2,7 @@
 
 # REQ: Runs the python script. <skr 2023-02-11>
 
-set +o bracexpand
+set +o braceexpand
 set -o errexit
 set -o noclobber
 set -o noglob
