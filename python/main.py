@@ -6,7 +6,7 @@
 
 from disnake import Intents
 from disnake import Game
-from disnake import Colour
+from discord import Colour
 from disnake.ext.commands import Bot
 from os import environ
 from webcolors import CSS3_NAMES_TO_HEX
