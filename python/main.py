@@ -4,10 +4,10 @@
 
 # ???: What scopes and permissions are needed? <skr>
 
-from discord import Intents
-from discord import Game
-from discord import Colour
-from discord.ext.commands import Bot
+from disnake import Intents
+from disnake import Game
+from disnake import Colour
+from disnake.ext.commands import Bot
 from os import environ
 from webcolors import CSS3_NAMES_TO_HEX
 
