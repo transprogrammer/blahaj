@@ -20,14 +20,8 @@ GAME= Game(name="musical notes 🎶")
 
 BOT = Bot(command_prefix=PREFIX, intents=INTENTS, activity=GAME)
 
-NAME = 'sing'
-ALIASES = [
-  'punk',
-  'rock'
-]
-
-@BOT.command(aliases=ALIASES)
-async def sing(context):
+@BOT.command()
+async def colour_sync(context):
     print(context)
     for name, hex in CSS3_NAMES_TO_HEX.items(): 
         hex_color = Colour.from_str(hex)
@@ -39,6 +33,19 @@ async def sing(context):
 
         await context.send(f'{name}:{hex}')
         await context.guild.create_role(**role_opts)
+
+@BOT.command()
+async def colour_sync(context):
+    print(context)
+
+    for role in desired_roles:
+        await context.send(f'{name}')
+
+
+def desired_roles
+    with open('../config/gsrm.csv', 'r') as csvfile:
+        role_reader = csv.reader(csvfile)
+        desired_roles = [row[0] for row in role_reader]
 
 TOKEN = environ['DISCORD_TOKEN']
 
