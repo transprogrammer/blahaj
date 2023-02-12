@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# REQ: Creates HTML5 color roles. <skr>
+# REQ: Creates HTML5 color roles. <skr 2023-02-11>
+
+# ???: What scopes and permissions are needed? <skr>
 
 from discord import Intents
 from discord import Game
