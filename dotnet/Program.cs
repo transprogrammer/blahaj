@@ -9,56 +9,50 @@ using System;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Microsoft.Azure.Management.Fluent;
 
 namespace Deploy
 {
     class Program
     {
-        const string ResourceGroupName = "blahaj";
-        const string DeploymentName = "blahaj-deployment";
-
-        static readonly Region PrimaryRegion = Region.USEast2;
-        static readonly Region FailoverRegion = Region.USWest2;
-
-	    const string SubscriptionId = "8713d401-d857-426a-95ff-9ff08e7930da";
-
-        const string TemplateFilename = "main.json";
-        
-        const string PublicKeyPath = "../ssh/id_rsa.pub";
+        const string ConfigPath = "./configuration.json";
+        static Configuration configuration;
 
         static void Main(string[] args)
         {
-	        var credentials = new AzureCliCredential();
+            configuration = new Configuration(ConfigPath);
 
-            var defaultCredential = new DefaultAzureCredential();
-            var defaultToken = defaultCredential.GetToken(new TokenRequestContext(new[] { "https://management.azure.com/.default" })).Token;
-            var defaultTokenCredentials = new Microsoft.Rest.TokenCredentials(defaultToken);
-            var azureCredentials = new Microsoft.Azure.Management.ResourceManager.Fluent.Authentication.AzureCredentials(defaultTokenCredentials, defaultTokenCredentials, null, AzureEnvironment.AzureGlobalCloud);
-            var azure = FluentAzure.Configure().Authenticate(azureCredentials).WithSubscription(SubscriptionId);
+            AzureCliCredential credentials = new AzureCliCredential();
 
-            var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TemplateFilename);
-            var templateData = File.ReadAllText(templatePath);
+            IAzure azureFluency = GetFluency();
 
-            var publicKeyData = File.ReadAllText(PublicKeyPath);
+            string templateContent = GetTemplateContent(configuration.TemplateFilename);
 
-            var parameterObject = new {
-                public_key = new { value = publicKeyData},
-                primary_region = new { value = PrimaryRegion.Name},
-                failover_region = new { value = FailoverRegion.Name}
+            string publicKeyData = GetPublicKeyData(configuration.PublicKeyPath);
+
+            string deploymentParameters = new DeploymentParameters(configuration, publicKeyData).ToString();
+
+            string bicepParameter
+
+            var parameterObject = new
+            {
+                public_key = new { value = publicKeyData },
+                primary_region = new { value = configuration.Regions[RegionTypes.Primary] } //PrimaryRegion.Name },
+                failover_region = new { value = configuration.Regions[RegionTypes.Failover] } //FailoverRegion.Name }
             };
             var parameterData = JsonConvert.SerializeObject(parameterObject);
 
             Console.WriteLine("parameterData: " + parameterData);
 
-            var blankDeployment = azure.Deployments.Define(DeploymentName);
+            var blankDeployment = azureFluency.Deployments.Define(configuration.DeploymentName);
 
             IWithTemplate templateReadyDeployment;
 
-            if (azure.ResourceGroups.Contain(ResourceGroupName))
+            if (azureFluency.ResourceGroups.Contain(configuration.ResourceGroupPrefix))
             {
-                var existingResourceGroup = azure.ResourceGroups.GetByName(ResourceGroupName);
+                var existingResourceGroup = azureFluency.ResourceGroups.GetByName(configuration.ResourceGroupPrefix);
 
-                if (existingResourceGroup.Region != PrimaryRegion)
+                if (existingResourceGroup.Region != configuration.Regions[RegionTypes.Primary])
                 {
                     var errorMessage = String.Format(
                         "${Existing resource group {0} has region {1}, expecting {2}",
@@ -70,9 +64,11 @@ namespace Deploy
                     throw new ArgumentException(errorMessage);
                 }
 
-                templateReadyDeployment = blankDeployment.WithExistingResourceGroup(ResourceGroupName);
-            } else {
-                templateReadyDeployment = blankDeployment.WithNewResourceGroup(ResourceGroupName, PrimaryRegion);
+                templateReadyDeployment = blankDeployment.WithExistingResourceGroup(configuration.ResourceGroupPrefix);
+            }
+            else
+            {
+                templateReadyDeployment = blankDeployment.WithNewResourceGroup(configuration.ResourceGroupPrefix, PrimaryRegion);
             }
 
             var deployment = templateReadyDeployment
@@ -80,17 +76,33 @@ namespace Deploy
                 .WithParameters(parameterData)
                 .WithMode(DeploymentMode.Incremental)
                 .BeginCreate();
-        
+
             Console.WriteLine("Current deployment status : " + deployment.ProvisioningState);
 
-            var interimStates = new []{ProvisioningState.Running, ProvisioningState.Accepted};
+            var interimStates = new[] { ProvisioningState.Running, ProvisioningState.Accepted };
 
-            while(interimStates.Contains(deployment.ProvisioningState))
+            while (interimStates.Contains(deployment.ProvisioningState))
             {
                 SdkContext.DelayProvider.Delay(10000);
-                deployment = azure.Deployments.GetByResourceGroup(ResourceGroupName, DeploymentName);
+                deployment = azureFluency.Deployments.GetByResourceGroup(configuration.ResourceGroupPrefix, configuration.DeploymentName);
                 Console.WriteLine("Current deployment status : " + deployment.ProvisioningState);
             }
+        }
+        static IAzure GetFluency()
+        {
+            var defaultCredential = new DefaultAzureCredential();
+            var defaultToken = defaultCredential.GetToken(new TokenRequestContext(new[] { "https://management.azureFluency.com/.default" })).Token;
+            var defaultTokenCredentials = new Microsoft.Rest.TokenCredentials(defaultToken);
+            var azureCredentials = new Microsoft.Azure.Management.ResourceManager.Fluent.Authentication.AzureCredentials(defaultTokenCredentials, defaultTokenCredentials, null, AzureEnvironment.AzureGlobalCloud);
+            var azure = FluentAzure.Configure().Authenticate(azureCredentials).WithSubscription("subscriptionId");
+            return azure;
+        }
+
+        static string GetTemplateContent(string templateFilename)
+        {
+            var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, templateFilename);
+            var templateData = File.ReadAllText(templatePath);
+            return templateData;
         }
     }
 }

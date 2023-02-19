@@ -1,26 +1,26 @@
-param username string = 'uwu'
+param username string
 
 @secure()
-param public_key string
+param publicKey string
 
-param primary_region string
-param failover_region string
+param primaryRegion string
+param failoverRegion string
 
 var name = 'blahaj'
 
-var virtual_machine_size = 'Standard_B2ms'
-var storage_account_type = 'Standard_LRS'
+param virtualMachineSize string
+param storageAccountType string
 
-var virtual_network_address_prefix = '10.1.0.0/16'
-var subnet_address_prefix          = '10.1.0.0/24'
+param virtualNetworkAddressPrefix string
+param subnetAddressPrefix string
 
-var ubuntu_server_offer = '0001-com-ubuntu-server-focal'
-var ubuntu_server_sku = '20_04-lts-gen2'
-var ubuntu_server_version = 'latest'
+param ubuntuServerOffer string
+param ubuntuServerSku string
+param ubuntuServerVersion string
 
 resource public_ip_address 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   sku: {
     name: 'Basic'
   }
@@ -36,44 +36,44 @@ resource public_ip_address 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
 
 resource network_security_group 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   properties: {
-    securityRules: [{
-      name: 'SSH'
-      properties: {
-        priority: 1000
-        protocol: 'Tcp'
-        access: 'Allow'
-        direction: 'Inbound'
-        sourceAddressPrefix: '*'
-        sourcePortRange: '*'
-        destinationAddressPrefix: '*'
-        destinationPortRange: '22'
-      }
-    }]
+    securityRules: [ {
+        name: 'SSH'
+        properties: {
+          priority: 1000
+          protocol: 'Tcp'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefix: '*'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '22'
+        }
+      } ]
   }
 }
 
 resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   properties: {
     addressSpace: {
       addressPrefixes: [
-        virtual_network_address_prefix
+        virtualNetworkAddressPrefix
       ]
     }
-    subnets: [{
-      name: name
-      properties: {
-        addressPrefix: subnet_address_prefix
-        privateEndpointNetworkPolicies: 'Enabled'
-        privateLinkServiceNetworkPolicies: 'Enabled'
-        networkSecurityGroup: {
-          id: network_security_group.id
+    subnets: [ {
+        name: name
+        properties: {
+          addressPrefix: subnetAddressPrefix
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+          networkSecurityGroup: {
+            id: network_security_group.id
+          }
         }
-      }
-    }]
+      } ]
   }
 }
 
@@ -95,7 +95,7 @@ resource private_dns_zone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
 resource network_interface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   properties: {
     ipConfigurations: [
       {
@@ -119,41 +119,41 @@ resource network_interface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
 
 resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   properties: {
     hardwareProfile: {
-      vmSize: virtual_machine_size
+      vmSize: virtualMachineSize
     }
     storageProfile: {
       osDisk: {
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: storage_account_type
+          storageAccountType: storageAccountType
         }
       }
       imageReference: {
         publisher: 'Canonical'
-        offer: ubuntu_server_offer
-        sku: ubuntu_server_sku
-        version: ubuntu_server_version
+        offer: ubuntuServerOffer
+        sku: ubuntuServerSku
+        version: ubuntuServerVersion
       }
     }
     networkProfile: {
-      networkInterfaces: [{
-        id: network_interface.id
-      }]
+      networkInterfaces: [ {
+          id: network_interface.id
+        } ]
     }
     osProfile: {
       computerName: name
       adminUsername: username
-      adminPassword: public_key 
+      adminPassword: publicKey
       linuxConfiguration: {
         disablePasswordAuthentication: true
         ssh: {
           publicKeys: [
             {
               path: '/home/${username}/.ssh/authorized_keys'
-              keyData: public_key
+              keyData: publicKey
             }
           ]
         }
@@ -164,7 +164,7 @@ resource virtual_machine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 
 resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   kind: 'MongoDB'
   properties: {
     apiProperties: {
@@ -182,7 +182,7 @@ resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
     enableAutomaticFailover: true
     locations: [
       {
-        locationName: failover_region
+        locationName: failoverRegion
         failoverPriority: 0
         isZoneRedundant: false
       }
@@ -205,7 +205,7 @@ resource database_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-07-01' = {
   name: name
-  location: primary_region
+  location: primaryRegion
   properties: {
     subnet: filter(virtual_network.properties.subnets, subnet => subnet.name == name)[0]
     privateLinkServiceConnections: [
