@@ -15,6 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Bicep Include="main.bicep" />
+    <Bicep Include="bicep/main.bicep" />
   </ItemGroup>
 </Project>

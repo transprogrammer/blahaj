@@ -54,6 +54,11 @@ resource network_security_group 'Microsoft.Network/networkSecurityGroups@2022-07
   }
 }
 
+resource application_security_group 'Microsoft.Network/applicationSecurityGroups@2022-07-01' = {
+  name: name
+  location: primaryRegion
+}
+
 resource virtual_network 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: name
   location: primaryRegion
@@ -108,6 +113,9 @@ resource network_interface 'Microsoft.Network/networkInterfaces@2022-07-01' = {
           publicIPAddress: {
             id: public_ip_address.id
           }
+          applicationSecurityGroups: [ {
+              id: application_security_group.id
+            } ]
         }
       }
     ]
