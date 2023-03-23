@@ -15,6 +15,12 @@ The following types of content are prohibited on our platform:
 
 **Misinformation**: Any content that is intentionally false or misleading, notably if it may cause harm to individuals or the community.
 
+**Flashing and Fast-Moving Graphics**: To protect members who may be sensitive to flashing or fast-moving images, any content containing such graphics must be properly spoilered and include a content warning. This helps to prevent potential harm or discomfort for individuals with photosensitivity, epilepsy, or other related conditions.
+
+**Sudden Loud Noises**: When sharing videos that contain sudden or excessively loud noises, please include a content warning and spoiler tag. This consideration helps to protect members who may be sensitive to such noises or have hearing-related conditions.
+
+**Triggering Content**: Members must be mindful of sharing content that may be triggering for others. Any content that discusses or depicts potentially distressing topics (e.g., self-harm, abuse, eating disorders, or suicide) should be spoilered and accompanied by a content warning. This enables members who may be sensitive to these topics to avoid exposure to potentially harmful content.
+
 
 **Moderation**
 
