@@ -21,6 +21,8 @@ The following types of content are prohibited on our platform:
 
 **Triggering Content**: Members must be mindful of sharing content that may be triggering for others. Any content that discusses or depicts potentially distressing topics (e.g., self-harm, abuse, eating disorders, or suicide) should be spoilered and accompanied by a content warning. This enables members who may be sensitive to these topics to avoid exposure to potentially harmful content.
 
+**Illicit Content**: We expressly prohibit any content that violates Discord's Terms of Service Agreement. This includes, but is not limited to, malicious software, pirated media, and exploitative or abusive imagery.
+
 
 **Moderation**
 
