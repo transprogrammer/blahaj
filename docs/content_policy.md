@@ -23,6 +23,10 @@ The following types of content are prohibited on our platform:
 
 **Illicit Content**: We expressly prohibit any content that violates Discord's Terms of Service Agreement. This includes, but is not limited to, malicious software, pirated media, and exploitative or abusive imagery.
 
+**Discrimination Policy**: We strictly prohibit discriminatory content based on gender, gender identity, sex, sexual orientation, race, ethnicity, disability, or any protected categories. This includes jokes or slurs, even if meant as "harmless" or "for fun."
+
+**Exceptions**: Respectful, constructive discussions on these topics are allowed. Reclaimed slurs may be used in specific circumstances, such as self-identification. Enforcement and interpretation are at the discretion of moderation staff, who may take disciplinary action for misuse.
+
 
 **Moderation**
 
