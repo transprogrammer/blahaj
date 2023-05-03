@@ -6,7 +6,7 @@ If you encounter rule-breaking on our server, report it to our moderation team f
 
 To report a violation, you can either mention the @Mod Team role, or send a modmail by direct messaging @transprogrammer modmail#5421.
 
-When reporting violations, please provide as much detail as possible, including the usernames and a description of what happened.
+When reporting violations, please provide as much detail as possible, including usernames and a description of what happened.
 
 Our moderation team will review all reports promptly and take appropriate action.
 
