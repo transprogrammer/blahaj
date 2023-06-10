@@ -11,6 +11,8 @@ The following types of content are prohibited on our platform:
 
 **Harassment**: Any content intended to intimidate, bully, or harass an individual or group.
 
+**Exercise mindful self-expression:** While it’s natural to share struggles, frequent self-deprecating comments, especially about appearance or “passability,” can inadvertently foster negativity and insecurities in the community. Remember, everyone is at a unique stage in their journey. We encourage fostering positivity, resilience, and support in all discussions related to personal transition progress.
+
 **Adult Content**: Any content that is sexually explicit, sexually charged, violent, or otherwise inappropriate for all ages.
 
 **Misinformation**: Any content that is intentionally false or misleading, notably if it may cause harm to individuals or the community.
